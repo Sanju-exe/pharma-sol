@@ -6,19 +6,29 @@ export default function PrescriptionReview({ data, onConfirm, onBack }) {
       return { patientName: "", illness: "", approved: false, medicines: [] };
     }
     
-    let mappedMedicines = data.medicines || [];
-    if (mappedMedicines.length === 0 && data.suggested_medicines && data.suggested_medicines.length > 0) {
-      mappedMedicines = data.suggested_medicines.map(m => ({
-        name: m.medicine_name || "",
-        dosage: m.dosage || "",
-        frequency: m.frequency || "",
-        duration: m.duration_days || 1,
-        foodTiming: m.food_instruction || ""
-      }));
+    let rawMeds = data.medicines || data.suggested_medicines || data.extracted_medicines || data.meds || [];
+    if (typeof rawMeds === 'string') {
+      try { rawMeds = JSON.parse(rawMeds); } catch(e) {}
+    }
+
+    let mappedMedicines = [];
+    if (Array.isArray(rawMeds) && rawMeds.length > 0) {
+      mappedMedicines = rawMeds.map(m => ({
+        name: m.medicine_name || m.name || m.medicineName || m.drug_name || m.medicine || "",
+        dosage: m.dosage || m.dose || "",
+        frequency: Array.isArray(m.frequency) ? m.frequency.join(', ') : (m.frequency || ""),
+        duration: m.duration_days || m.duration || m.days || 1,
+        foodTiming: m.food_instruction || m.foodTiming || m.instructions || m.timing || "After Food"
+      })).filter(m => String(m.name).trim() !== "" || String(m.dosage).trim() !== "");
+    }
+
+    if (mappedMedicines.length === 0) {
+      mappedMedicines = [{ name: "", dosage: "", frequency: "", duration: 1, foodTiming: "After Food" }];
     }
 
     return {
       ...data,
+      patientName: data.patientName || data.name || "",
       illness: data.illness || data.diagnosis || data.general_consultation || "General Consultation",
       medicines: mappedMedicines
     };

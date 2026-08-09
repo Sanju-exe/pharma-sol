@@ -10,6 +10,8 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
     import.meta.env.VITE_VOICE_WEBHOOK_URL ||
     "https://api.agents.snsihub.ai/webhook/aca7be79-e11d-4df6-9373-3e8cf3f2b9c3";
 
+  const TEST_WEBHOOK_URL = WEBHOOK_URL.replace('/webhook/', '/webhook-test/');
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -31,6 +33,35 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
     }
   };
 
+  const parseResponseData = (rawData) => {
+    let parsed = rawData;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      parsed = parsed[0];
+    }
+    if (parsed && parsed.json && typeof parsed.json === 'object') {
+      parsed = parsed.json;
+    }
+    if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0 && parsed.items[0]?.json) {
+      parsed = parsed.items[0].json;
+    }
+    if (parsed && parsed.body && typeof parsed.body === 'object' && Object.keys(parsed.body).length > 0) {
+      parsed = { ...parsed, ...parsed.body };
+    }
+    if (parsed && typeof parsed.output === 'string') {
+      try {
+        const fromOutput = JSON.parse(parsed.output);
+        parsed = { ...parsed, ...fromOutput };
+      } catch (e) {}
+    }
+    if (parsed && typeof parsed.text === 'string') {
+      try {
+        const fromText = JSON.parse(parsed.text);
+        parsed = { ...parsed, ...fromText };
+      } catch (e) {}
+    }
+    return parsed || {};
+  };
+
   const stopRecording = () => {
     if (mediaRecorder.current) {
       mediaRecorder.current.stop();
@@ -43,37 +74,50 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
 
         const formData = new FormData();
         formData.append("data", audioBlob, "consultation.webm");
+        formData.append("file", audioBlob, "consultation.webm");
+        formData.append("audio", audioBlob, "consultation.webm");
+
+        if (activePatient) {
+          formData.append("patientName", activePatient.name || "");
+          formData.append("patientId", activePatient.patientId || "");
+          formData.append("complaints", activePatient.complaints || "");
+          formData.append("age", activePatient.age || "");
+          formData.append("gender", activePatient.gender || "");
+        }
 
         try {
-          const response = await fetch(WEBHOOK_URL, {
+          // Attempt Production Webhook first
+          let response = await fetch(WEBHOOK_URL, {
             method: "POST",
             body: formData,
           });
 
-          let data = {};
-          if (response.ok) {
-            let rawData = await response.json().catch(() => ({}));
-            console.log("[Voice Webhook] Raw response:", rawData);
-
-            if (Array.isArray(rawData) && rawData.length > 0) {
-              rawData = rawData[0];
-            }
-            if (rawData && rawData.json && typeof rawData.json === 'object') {
-              rawData = rawData.json;
-            }
-            if (rawData && Array.isArray(rawData.items) && rawData.items.length > 0 && rawData.items[0].json) {
-              rawData = rawData.items[0].json;
-            }
-            if (rawData && rawData.body && typeof rawData.body === 'object') {
-              rawData = { ...rawData, ...rawData.body };
-            }
-            data = rawData || {};
+          // If production endpoint is 404 or unroutable, try test endpoint
+          if (!response.ok && response.status === 404) {
+            console.log("[Voice Webhook] Production endpoint 404, trying test listener endpoint...");
+            response = await fetch(TEST_WEBHOOK_URL, {
+              method: "POST",
+              body: formData,
+            });
           }
 
-          // Attach active patient details
+          // If listening mode is active, also trigger test endpoint to populate n8n UI live test listener
+          fetch(TEST_WEBHOOK_URL, {
+            method: "POST",
+            body: formData,
+          }).catch(() => {});
+
+          let data = {};
+          if (response.ok) {
+            const rawData = await response.json().catch(() => ({}));
+            console.log("[Voice Webhook] Raw response received:", rawData);
+            data = parseResponseData(rawData);
+          }
+
+          // Attach active patient details if not present
           if (activePatient) {
-            data.patientName = activePatient.name;
-            data.patientId = activePatient.patientId;
+            data.patientName = activePatient.name || data.patientName;
+            data.patientId = activePatient.patientId || data.patientId;
             data.illness = activePatient.complaints || data.illness || data.diagnosis || data.general_consultation || "General Consultation";
           }
 
