@@ -258,7 +258,7 @@ const sendPdf = async (req, res) => {
     billHtml: billHtml
   };
 
-  const webhookUrl = process.env.WORKBENCH_WEBHOOK_URL || 'https://api.agents.snsihub.ai/webhook-test/aca7be79-e11d-4df6-9373-3e8cf3f2b9c3';
+  const webhookUrl = process.env.WORKBENCH_WEBHOOK_URL || 'https://api.agents.snsihub.ai/webhook/aca7be79-e11d-4df6-9373-3e8cf3f2b9c3';
 
   try {
     console.log(`[Workbench Webhook] Dispatching data to ${webhookUrl}...`);

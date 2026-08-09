@@ -7,7 +7,8 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
   const chunks = useRef([]);
 
   const WEBHOOK_URL =
-    "https://api.agents.snsihub.ai/webhook-test/8a518174-c051-488d-8531-3f53a2412c9f";
+    import.meta.env.VITE_VOICE_WEBHOOK_URL ||
+    "https://api.agents.snsihub.ai/webhook/8a518174-c051-488d-8531-3f53a2412c9f";
 
   const startRecording = async () => {
     try {
@@ -51,7 +52,11 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
 
           let data = {};
           if (response.ok) {
-            data = await response.json().catch(() => ({}));
+            const rawData = await response.json().catch(() => ({}));
+            data = Array.isArray(rawData) ? (rawData[0] || {}) : rawData;
+            if (data.body && typeof data.body === 'object') {
+              data = { ...data, ...data.body };
+            }
           }
 
           // Attach active patient details
