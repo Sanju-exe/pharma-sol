@@ -8,6 +8,7 @@ export default function LandingPage({ onBookDemo }) {
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
+    phone: '',
     pharmacyName: '',
     message: ''
   });
@@ -654,9 +655,9 @@ export default function LandingPage({ onBookDemo }) {
             {formSubmitted ? (
               <div className="form-success-box">
                 <div className="success-icon-circle">✓</div>
-                <h3>Message Sent Successfully!</h3>
-                <p>Thank you for reaching out. Our team will contact you shortly.</p>
-                <button className="btn-send-again" onClick={() => setFormSubmitted(false)}>Send Another Message</button>
+                <h3>Message Sent Successfully</h3>
+                <p>Thank you for reaching out{contactForm.name ? `, ${contactForm.name}` : ''}. Our team will contact you shortly.</p>
+                <button className="btn-send-again" onClick={() => { setFormSubmitted(false); setContactForm({ name: '', email: '', phone: '', pharmacyName: '', message: '' }); }}>Send Another Message</button>
               </div>
             ) : (
               <form onSubmit={handleContactSubmit}>
@@ -665,7 +666,7 @@ export default function LandingPage({ onBookDemo }) {
                     <label>Name</label>
                     <input 
                       type="text" 
-                      placeholder="Dr. Jane Doe" 
+                      placeholder="Sanjay D" 
                       value={contactForm.name}
                       onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
                       required 
@@ -675,7 +676,7 @@ export default function LandingPage({ onBookDemo }) {
                     <label>Email</label>
                     <input 
                       type="email" 
-                      placeholder="jane@hospital.com" 
+                      placeholder="sanjay.d2147@gmail.com" 
                       value={contactForm.email}
                       onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
                       required 
@@ -683,15 +684,25 @@ export default function LandingPage({ onBookDemo }) {
                   </div>
                 </div>
 
-                <div className="form-field">
-                  <label>Hospital Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="City General Hospital" 
-                    value={contactForm.pharmacyName}
-                    onChange={(e) => setContactForm({...contactForm, pharmacyName: e.target.value})}
-                    required 
-                  />
+                <div className="form-row-2col">
+                  <div className="form-field">
+                    <label>Phone</label>
+                    <input 
+                      type="tel" 
+                      placeholder="6382070682" 
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>Hospital / Facility Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="SNS College of Technology" 
+                      value={contactForm.pharmacyName}
+                      onChange={(e) => setContactForm({...contactForm, pharmacyName: e.target.value})}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-field">
@@ -713,7 +724,7 @@ export default function LandingPage({ onBookDemo }) {
             )}
           </div>
 
-          {/* Right Column: Contact Info Card + Google Map Placeholder Card */}
+          {/* Right Column: Contact Info Card */}
           <div className="contact-info-col">
             {/* Top Card: Contact Information */}
             <div className="contact-info-card">
@@ -721,11 +732,21 @@ export default function LandingPage({ onBookDemo }) {
               
               <div className="contact-info-row">
                 <div className="info-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div className="info-detail-text">
+                  <span className="detail-label">NAME</span>
+                  <span className="detail-value">Sanjay D</span>
+                </div>
+              </div>
+
+              <div className="contact-info-row">
+                <div className="info-icon-box">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
                 <div className="info-detail-text">
                   <span className="detail-label">EMAIL</span>
-                  <a href="mailto:hello@snshospital.com" className="detail-value-link">hello@snshospital.com</a>
+                  <a href="mailto:sanjay.d2147@gmail.com" className="detail-value-link">sanjay.d2147@gmail.com</a>
                 </div>
               </div>
 
@@ -735,7 +756,7 @@ export default function LandingPage({ onBookDemo }) {
                 </div>
                 <div className="info-detail-text">
                   <span className="detail-label">PHONE</span>
-                  <span className="detail-value">+1 (555) 018-2026</span>
+                  <span className="detail-value">6382070682</span>
                 </div>
               </div>
 
@@ -745,7 +766,7 @@ export default function LandingPage({ onBookDemo }) {
                 </div>
                 <div className="info-detail-text">
                   <span className="detail-label">ADDRESS</span>
-                  <span className="detail-value">24 Wellness Ave, MedCity, 600001</span>
+                  <span className="detail-value">SNS College of Technology, Saravanampatti, Coimbatore</span>
                 </div>
               </div>
             </div>
