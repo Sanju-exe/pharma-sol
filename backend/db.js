@@ -1,10 +1,11 @@
 const mysql = require('mysql2');
 
 const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'Sanju@12127',
-  database: 'pharmsync',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'Sanju@12127',
+  database: process.env.DB_NAME || 'pharmsync',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
