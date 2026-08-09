@@ -4,7 +4,14 @@ import './Reception.css';
 
 export default function Reception({ onBack, user, onLogout }) {
   const [view, setView] = useState('dashboard'); // 'dashboard' | 'patients' | 'registration'
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_ai_patients');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
@@ -31,8 +38,11 @@ export default function Reception({ onBack, user, onLogout }) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/patients`);
       const data = await res.json();
-      if (data.success) {
-        setPatients(data.data || []);
+      if (data.success && Array.isArray(data.data)) {
+        setPatients(data.data);
+        try {
+          localStorage.setItem('pharmacy_ai_patients', JSON.stringify(data.data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error("Failed to fetch patients:", err);

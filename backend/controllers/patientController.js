@@ -1,7 +1,12 @@
 const db = require('../db');
+const { loadStore, saveStore } = require('../utils/persistentStore');
 
-// In-memory store fallback to ensure continuous operation if MySQL server is offline or restarting
-let fallbackPatients = [];
+// Persistent disk-backed fallback store to ensure records persist across server restarts
+let fallbackPatients = loadStore('patients.json', []);
+
+const syncPatientsStore = () => {
+  saveStore('patients.json', fallbackPatients);
+};
 
 const getPatients = (req, res) => {
   const query = 'SELECT * FROM patients ORDER BY id ASC';
@@ -27,7 +32,7 @@ const getPatients = (req, res) => {
       }));
     }
 
-    // Combine DB patients with fallbackPatients memory array, ensuring status updates apply
+    // Combine DB patients with fallbackPatients memory/disk array, ensuring status updates apply
     const combinedMap = new Map();
     dbFormatted.forEach(p => {
       const key = p.patientId || String(p.id);
@@ -50,6 +55,8 @@ const getPatients = (req, res) => {
     });
 
     const combinedList = Array.from(combinedMap.values());
+    fallbackPatients = combinedList;
+    syncPatientsStore();
     res.json({ success: true, data: combinedList });
   });
 };
@@ -93,8 +100,9 @@ const createPatient = (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  // Keep fallback store in sync
+  // Keep fallback store in sync and persist to disk
   fallbackPatients.push(newPatientObj);
+  syncPatientsStore();
 
   const query = `
     INSERT INTO patients 
@@ -119,7 +127,7 @@ const createPatient = (req, res) => {
 
   db.query(query, values, (err, result) => {
     if (err) {
-      console.warn("MySQL insert failed, stored in fallback memory:", err.message);
+      console.warn("MySQL insert failed, stored in persistent fallback disk store:", err.message);
       return res.status(201).json({ success: true, data: newPatientObj });
     }
 
@@ -169,6 +177,7 @@ const updatePatientStatus = (req, res) => {
   } else {
     fallbackPatients.push({ patientId: rawKey, id: rawKey, status });
   }
+  syncPatientsStore();
 
   const isNumeric = /^\d+$/.test(rawKey);
   const query = isNumeric 
@@ -237,11 +246,12 @@ const deletePatient = (req, res) => {
   const rawKey = String(patientId).trim();
   const targetKey = rawKey.toUpperCase();
 
-  // Remove from fallback memory array
+  // Remove from fallback memory array and sync
   fallbackPatients = fallbackPatients.filter(p => {
     const pKey = (p.patientId || String(p.id)).trim().toUpperCase();
     return pKey !== targetKey;
   });
+  syncPatientsStore();
 
   const isNumeric = /^\d+$/.test(rawKey);
   const query = isNumeric 

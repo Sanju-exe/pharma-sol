@@ -1,8 +1,13 @@
 const db = require('../db');
 const { generatePrescriptionHTML, generateBillHTML } = require('../utils/htmlGenerator');
+const { loadStore, saveStore } = require('../utils/persistentStore');
 
-// In-memory fallback store for prescriptions
-let fallbackPrescriptions = [];
+// Persistent disk-backed fallback store for prescriptions across server restarts
+let fallbackPrescriptions = loadStore('prescriptions.json', []);
+
+const syncPrescriptionsStore = () => {
+  saveStore('prescriptions.json', fallbackPrescriptions);
+};
 
 const createPrescription = (req, res) => {
   const {
@@ -30,6 +35,7 @@ const createPrescription = (req, res) => {
   };
 
   fallbackPrescriptions.push(newRxObj);
+  syncPrescriptionsStore();
 
   const query = `
     INSERT INTO prescriptions 
@@ -49,7 +55,7 @@ const createPrescription = (req, res) => {
 
   db.query(query, values, (err, result) => {
     if (err) {
-      console.warn("MySQL insert prescription failed, stored in fallback memory:", err.message);
+      console.warn("MySQL insert prescription failed, stored in persistent fallback store:", err.message);
       return res.status(201).json({ success: true, data: newRxObj });
     }
 
@@ -106,7 +112,10 @@ const getPrescriptions = (req, res) => {
       }
     });
 
-    res.json({ success: true, data: Array.from(combinedMap.values()) });
+    const combinedList = Array.from(combinedMap.values());
+    fallbackPrescriptions = combinedList;
+    syncPrescriptionsStore();
+    res.json({ success: true, data: combinedList });
   });
 };
 
@@ -124,6 +133,7 @@ const updatePrescriptionStatus = (req, res) => {
       rx.status = status;
     }
   });
+  syncPrescriptionsStore();
 
   const isNumeric = /^\d+$/.test(rawKey);
   const query = isNumeric 

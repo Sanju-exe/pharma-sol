@@ -4,8 +4,22 @@ import { API_BASE_URL } from './config';
 import './Pharmacy.css';
 export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
   const [activeTab, setActiveTab] = useState('pharmacy');
-  const [dbPrescriptions, setDbPrescriptions] = useState([]);
-  const [inventory, setInventory] = useState([]);
+  const [dbPrescriptions, setDbPrescriptions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_ai_prescriptions');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [inventory, setInventory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_ai_inventory');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [inventorySearch, setInventorySearch] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMedicine, setNewMedicine] = useState({ name: '', stock: '', expiry_date: '' });
@@ -19,8 +33,11 @@ export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/prescriptions`);
       const data = await res.json();
-      if (data.success) {
-        setDbPrescriptions(data.data || []);
+      if (data.success && Array.isArray(data.data)) {
+        setDbPrescriptions(data.data);
+        try {
+          localStorage.setItem('pharmacy_ai_prescriptions', JSON.stringify(data.data));
+        } catch (e) {}
       }
     } catch (e) {
       console.error("Failed to fetch prescriptions from backend:", e);
@@ -31,8 +48,11 @@ export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/inventory`);
       const data = await res.json();
-      if (data.success) {
-        setInventory(data.data || []);
+      if (data.success && Array.isArray(data.data)) {
+        setInventory(data.data);
+        try {
+          localStorage.setItem('pharmacy_ai_inventory', JSON.stringify(data.data));
+        } catch (e) {}
       }
     } catch (e) {
       console.error("Failed to fetch inventory from backend:", e);

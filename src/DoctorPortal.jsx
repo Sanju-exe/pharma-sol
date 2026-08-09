@@ -5,7 +5,14 @@ import PrescriptionReview from './PrescriptionReview';
 import './DoctorPortal.css';
 
 export default function DoctorPortal({ onBack, onConfirmPrescription, pharmacyQueue, user, onLogout }) {
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_ai_patients');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescriptionData, setPrescriptionData] = useState(null);
   const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'waiting' | 'in-consultation' | 'approved'
@@ -15,9 +22,12 @@ export default function DoctorPortal({ onBack, onConfirmPrescription, pharmacyQu
     try {
       const res = await fetch(`${API_BASE_URL}/api/patients`);
       const data = await res.json();
-      if (data.success) {
-        const fetchedPatients = data.data || [];
+      if (data.success && Array.isArray(data.data)) {
+        const fetchedPatients = data.data;
         setPatients(fetchedPatients);
+        try {
+          localStorage.setItem('pharmacy_ai_patients', JSON.stringify(fetchedPatients));
+        } catch (e) {}
 
         // Keep selected patient reference updated, prioritizing 'In Consultation' patient
         setSelectedPatient(prev => {
