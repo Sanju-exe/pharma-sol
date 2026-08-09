@@ -8,7 +8,7 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
 
   const WEBHOOK_URL =
     import.meta.env.VITE_VOICE_WEBHOOK_URL ||
-    "https://api.agents.snsihub.ai/webhook/8a518174-c051-488d-8531-3f53a2412c9f";
+    "https://api.agents.snsihub.ai/webhook/aca7be79-e11d-4df6-9373-3e8cf3f2b9c3";
 
   const startRecording = async () => {
     try {
@@ -52,11 +52,22 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
 
           let data = {};
           if (response.ok) {
-            const rawData = await response.json().catch(() => ({}));
-            data = Array.isArray(rawData) ? (rawData[0] || {}) : rawData;
-            if (data.body && typeof data.body === 'object') {
-              data = { ...data, ...data.body };
+            let rawData = await response.json().catch(() => ({}));
+            console.log("[Voice Webhook] Raw response:", rawData);
+
+            if (Array.isArray(rawData) && rawData.length > 0) {
+              rawData = rawData[0];
             }
+            if (rawData && rawData.json && typeof rawData.json === 'object') {
+              rawData = rawData.json;
+            }
+            if (rawData && Array.isArray(rawData.items) && rawData.items.length > 0 && rawData.items[0].json) {
+              rawData = rawData.items[0].json;
+            }
+            if (rawData && rawData.body && typeof rawData.body === 'object') {
+              rawData = { ...rawData, ...rawData.body };
+            }
+            data = rawData || {};
           }
 
           // Attach active patient details
