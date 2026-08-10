@@ -312,10 +312,16 @@ export default function DoctorPortal({ onBack, onConfirmPrescription, user, onLo
     setPrescriptionData(null);
   };
 
-  const activePatients = patients.filter(p => p.status !== 'Verified' && p.status !== 'Approved' && p.status !== 'Completed');
-  const waitingPatients = patients.filter(p => p.status === 'Waiting');
-  const inConsultPatients = patients.filter(p => p.status === 'In Consultation');
-  const verifiedPatients = patients.filter(p => p.status === 'Verified' || p.status === 'Approved' || p.status === 'Completed');
+  const activePatients = patients.filter(p => {
+    const st = (p.status || '').toLowerCase();
+    return st !== 'verified' && st !== 'approved' && st !== 'completed' && st !== 'dispensed';
+  });
+  const waitingPatients = patients.filter(p => (p.status || '').toLowerCase() === 'waiting');
+  const inConsultPatients = patients.filter(p => (p.status || '').toLowerCase() === 'in consultation');
+  const verifiedPatients = patients.filter(p => {
+    const st = (p.status || '').toLowerCase();
+    return st === 'verified' || st === 'approved' || st === 'completed' || st === 'dispensed';
+  });
 
   const filteredPatients = activeTabFilter === 'waiting'
     ? waitingPatients
@@ -323,11 +329,12 @@ export default function DoctorPortal({ onBack, onConfirmPrescription, user, onLo
     ? inConsultPatients
     : activeTabFilter === 'verified'
     ? verifiedPatients
-    : activePatients; // 'all' tab displays active queue (unverified patients)
+    : activePatients; // 'all' tab displays active queue (unverified & undispensed patients)
 
   const getStatusClass = (status) => {
-    if (status === 'In Consultation') return 'in-consultation';
-    if (status === 'Verified' || status === 'Approved' || status === 'Completed') return 'verified';
+    const st = (status || '').toLowerCase();
+    if (st === 'in consultation') return 'in-consultation';
+    if (st === 'verified' || st === 'approved' || st === 'completed' || st === 'dispensed') return 'verified';
     return 'waiting';
   };
 

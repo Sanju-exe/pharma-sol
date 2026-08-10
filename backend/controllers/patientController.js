@@ -14,7 +14,7 @@ const defaultSeedPatients = [
     bloodPressure: '120/80 mmHg',
     recordingDate: new Date().toLocaleDateString(),
     complaints: 'cold and cough',
-    status: 'Dispensed',
+    status: 'Waiting',
     collected_by: 'Receptionist'
   },
   {
@@ -29,7 +29,7 @@ const defaultSeedPatients = [
     bloodPressure: '122/82 mmHg',
     recordingDate: new Date().toLocaleDateString(),
     complaints: 'Acute Viral Fever',
-    status: 'Dispensed',
+    status: 'Waiting',
     collected_by: 'Receptionist'
   }
 ];
