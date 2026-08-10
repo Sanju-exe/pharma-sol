@@ -448,7 +448,7 @@ export default function Reception({ onBack, user, onLogout }) {
                 </button>
                 <button className="btn-register" onClick={() => { handleClearForm(); setIsRevisit(false); setView('registration'); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                  + New Entry
+                  New Entry
                 </button>
               </div>
             </div>
