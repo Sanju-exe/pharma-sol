@@ -11,8 +11,29 @@ import LandingPage from "./LandingPage";
 
 function App() {
   const [prescriptionData, setPrescriptionData] = useState(null);
-  const [portal, setPortal] = useState(null); // null means Landing/PortalSelection
-  const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'portals'
+  const [portal, setPortal] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlPortal = params.get('portal');
+      if (urlPortal) return urlPortal;
+      const savedPortal = localStorage.getItem('pharmacy_ai_active_portal');
+      return savedPortal || null;
+    } catch (e) {
+      return null;
+    }
+  }); // null means Landing/PortalSelection
+
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('portal') || localStorage.getItem('pharmacy_ai_active_portal')) return 'portals';
+      if (params.get('view') === 'portals') return 'portals';
+      return 'landing';
+    } catch (e) {
+      return 'landing';
+    }
+  }); // 'landing' | 'portals'
+
   const [loggedInPortals, setLoggedInPortals] = useState(() => {
     try {
       const saved = localStorage.getItem('pharmacy_ai_logged_in_portals');
@@ -32,6 +53,19 @@ function App() {
 
   const lastPopStateTimeRef = useRef(0);
 
+  // Sync active portal to localStorage
+  const updateActivePortalState = (newPortal, newViewMode = 'portals') => {
+    setPortal(newPortal);
+    setViewMode(newViewMode);
+    try {
+      if (newPortal) {
+        localStorage.setItem('pharmacy_ai_active_portal', newPortal);
+      } else {
+        localStorage.removeItem('pharmacy_ai_active_portal');
+      }
+    } catch (e) {}
+  };
+
   // Initialize History API for native swipe-to-go-back support
   useEffect(() => {
     // Static center position for background glow
@@ -39,21 +73,18 @@ function App() {
     document.documentElement.style.setProperty('--mouse-y', `50vh`);
 
     const params = new URLSearchParams(window.location.search);
-    const initialPortal = params.get('portal');
+    const initialPortal = params.get('portal') || localStorage.getItem('pharmacy_ai_active_portal');
     const initialView = params.get('view');
     
     if (initialPortal) {
-      setPortal(initialPortal);
-      setViewMode('portals');
-      window.history.replaceState({ viewMode: 'portals', portal: initialPortal }, "");
+      updateActivePortalState(initialPortal, 'portals');
+      window.history.replaceState({ viewMode: 'portals', portal: initialPortal }, "", `?portal=${initialPortal}`);
     } else if (initialView === 'portals') {
-      setPortal(null);
-      setViewMode('portals');
-      window.history.replaceState({ viewMode: 'portals', portal: null }, "");
+      updateActivePortalState(null, 'portals');
+      window.history.replaceState({ viewMode: 'portals', portal: null }, "", "?view=portals");
     } else {
-      setPortal(null);
-      setViewMode('landing');
-      window.history.replaceState({ viewMode: 'landing', portal: null }, "");
+      updateActivePortalState(null, 'landing');
+      window.history.replaceState({ viewMode: 'landing', portal: null }, "", window.location.pathname);
     }
 
     const handlePopState = (e) => {
@@ -61,7 +92,7 @@ function App() {
 
       if (e.state && e.state.subview) {
         if (e.state.portal) {
-          setPortal(e.state.portal);
+          updateActivePortalState(e.state.portal, 'portals');
         }
         return;
       }
@@ -69,16 +100,15 @@ function App() {
       setPortal((currentPortal) => {
         // If user is currently inside a portal (pharmacy, doctor, reception), 2-finger back swipe goes to Portals Selection!
         if (currentPortal !== null) {
-          setViewMode('portals');
+          updateActivePortalState(null, 'portals');
           return null;
         }
 
         // If user is on Portals Selection, back swipe goes to Landing Page
         setViewMode((currentViewMode) => {
-          if (currentViewMode === 'portals') {
-            return 'landing';
-          }
-          return e.state?.viewMode || 'landing';
+          const nextMode = (currentViewMode === 'portals') ? 'landing' : (e.state?.viewMode || 'landing');
+          updateActivePortalState(e.state?.portal || null, nextMode);
+          return nextMode;
         });
 
         return e.state?.portal || null;
@@ -100,8 +130,7 @@ function App() {
 
     if (viewMode !== 'portals' || portal !== null) {
       window.history.pushState({ viewMode: 'portals', portal: null }, "", "?view=portals");
-      setPortal(null);
-      setViewMode('portals');
+      updateActivePortalState(null, 'portals');
     }
   }, [viewMode, portal]);
 
@@ -111,8 +140,7 @@ function App() {
 
     if (viewMode !== 'landing' || portal !== null) {
       window.history.pushState({ viewMode: 'landing', portal: null }, "", window.location.pathname.replace(/\\?.*$/, ''));
-      setPortal(null);
-      setViewMode('landing');
+      updateActivePortalState(null, 'landing');
     }
   }, [viewMode, portal]);
 
@@ -120,8 +148,7 @@ function App() {
     if (p === portal) return;
     if (p) {
       window.history.pushState({ viewMode: 'portals', portal: p }, "", `?portal=${p}`);
-      setPortal(p);
-      setViewMode('portals');
+      updateActivePortalState(p, 'portals');
     } else {
       goToPortals();
     }
