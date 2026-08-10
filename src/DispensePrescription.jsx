@@ -169,6 +169,25 @@ export default function DispensePrescription({ prescription, onBack, onDispenseC
     const targetPatientId = prescription?.patientId;
 
     try {
+      // 1. Explicitly update patient status in DB to 'Dispensed'
+      if (targetPatientId) {
+        await fetch(`${API_BASE_URL}/api/patients/${encodeURIComponent(targetPatientId)}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Dispensed' })
+        }).catch(err => console.warn("Patient status update error:", err));
+      }
+
+      // 2. Explicitly update prescription status in DB to 'Dispensed'
+      if (targetRxKey) {
+        await fetch(`${API_BASE_URL}/api/prescriptions/${encodeURIComponent(targetRxKey)}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Dispensed' })
+        }).catch(err => console.warn("Prescription status update error:", err));
+      }
+
+      // 3. Dispatch PDF / Invoice & Webhook notification
       const res = await fetch(`${API_BASE_URL}/api/prescriptions/${encodeURIComponent(targetRxKey)}/send-pdf`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,8 +201,9 @@ export default function DispensePrescription({ prescription, onBack, onDispenseC
       const result = await res.json();
 
       if (result.success) {
-        console.log(result.message);
+        console.log("Send to Patient successful:", result.message);
         
+        // 4. Real-time Broadcast to all open tabs/portals
         if ('BroadcastChannel' in window) {
           const bc = new BroadcastChannel('patient_sync_channel');
           bc.postMessage({ type: 'REFETCH_PATIENTS' });
@@ -194,7 +214,7 @@ export default function DispensePrescription({ prescription, onBack, onDispenseC
         setIsSending(false);
         setShowInvoiceModal(false);
         if (onDispenseComplete) {
-          onDispenseComplete({ ...prescription, status: 'Verified' });
+          onDispenseComplete({ ...prescription, status: 'Dispensed' });
         }
       } else {
         alert(result.message || 'Failed to send document to patient.');

@@ -285,14 +285,14 @@ const sendPdf = async (req, res) => {
       console.log(`[Workbench Webhook] Data successfully received by Workbench Webhook!`);
     }
 
-    // 3. UPDATE DB Status to 'Verified' ONLY upon successful trigger
+    // 3. UPDATE DB Status to 'Dispensed' ONLY upon successful trigger
     const rawKey = decodeURIComponent(String(targetRxKey)).trim();
     const upperKey = rawKey.toUpperCase();
     const isNumeric = /^\d+$/.test(rawKey);
 
     db.query(
       isNumeric ? 'UPDATE prescriptions SET status = ? WHERE UPPER(rx_number) = ? OR id = ?' : 'UPDATE prescriptions SET status = ? WHERE UPPER(rx_number) = ?',
-      isNumeric ? ['Verified', upperKey, parseInt(rawKey, 10)] : ['Verified', upperKey],
+      isNumeric ? ['Dispensed', upperKey, parseInt(rawKey, 10)] : ['Dispensed', upperKey],
       (err) => { if (err) console.warn("Update prescription DB status failed:", err.message); }
     );
 
@@ -302,7 +302,7 @@ const sendPdf = async (req, res) => {
       const patIsNum = /^\d+$/.test(patKey);
       db.query(
         patIsNum ? 'UPDATE patients SET status = ? WHERE UPPER(patient_id) = ? OR id = ?' : 'UPDATE patients SET status = ? WHERE UPPER(patient_id) = ?',
-        patIsNum ? ['Verified', patUpper, parseInt(patKey, 10)] : ['Verified', patUpper],
+        patIsNum ? ['Dispensed', patUpper, parseInt(patKey, 10)] : ['Dispensed', patUpper],
         (err) => { if (err) console.warn("Update patient DB status failed:", err.message); }
       );
     }
@@ -310,13 +310,13 @@ const sendPdf = async (req, res) => {
     // Update in fallback store if active
     fallbackPrescriptions.forEach(rx => {
       const rxK = (rx.rxNumber || String(rx.id)).trim().toUpperCase();
-      if (rxK === upperKey) rx.status = 'Verified';
+      if (rxK === upperKey) rx.status = 'Dispensed';
     });
 
     res.json({
       success: true,
       message: 'Dispensing data successfully sent to SNS AI Workbench webhook!',
-      status: 'Verified'
+      status: 'Dispensed'
     });
 
   } catch (error) {
