@@ -18,7 +18,6 @@ function App() {
     doctor: null,
     pharmacy: null
   });
-  const [pharmacyQueue, setPharmacyQueue] = useState([]);
 
   const lastPopStateTimeRef = useRef(0);
 
@@ -100,7 +99,7 @@ function App() {
     if (now - lastPopStateTimeRef.current < 400) return;
 
     if (viewMode !== 'landing' || portal !== null) {
-      window.history.pushState({ viewMode: 'landing', portal: null }, "", window.location.pathname.replace(/\?.*$/, ''));
+      window.history.pushState({ viewMode: 'landing', portal: null }, "", window.location.pathname.replace(/\\?.*$/, ''));
       setPortal(null);
       setViewMode('landing');
     }
@@ -152,16 +151,6 @@ function App() {
 
   const handleConfirm = (finalData) => {
     console.log("Verified Prescription:", finalData);
-    
-    const newRx = {
-      id: `#RX-${Math.floor(1000 + Math.random() * 9000)}`,
-      patientName: finalData.patientName || 'Unknown Patient',
-      doctor: finalData.doctorName || finalData.doctor || (loggedInPortals.doctor?.name ? (loggedInPortals.doctor.name.startsWith('Dr.') ? loggedInPortals.doctor.name : `Dr. ${loggedInPortals.doctor.name}`) : 'Dr. Nikitha, MD'),
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      status: 'New',
-      ...finalData
-    };
-    setPharmacyQueue(prev => [...prev, newRx]);
     setPrescriptionData(null);
   };
 
@@ -197,7 +186,6 @@ function App() {
         <DoctorPortal 
           onBack={goBack} 
           onConfirmPrescription={handleConfirm}
-          pharmacyQueue={pharmacyQueue}
           user={loggedInPortals.doctor}
           onLogout={() => handleLogout('doctor')}
         />
@@ -217,7 +205,7 @@ function App() {
     }
     return (
       <div key="pharmacy-view" className="view-fade-in">
-        <Pharmacy onBack={goBack} queue={pharmacyQueue} user={loggedInPortals.pharmacy} onLogout={() => handleLogout('pharmacy')} />
+        <Pharmacy onBack={goBack} user={loggedInPortals.pharmacy} onLogout={() => handleLogout('pharmacy')} />
       </div>
     );
   }

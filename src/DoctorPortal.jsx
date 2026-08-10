@@ -4,15 +4,8 @@ import AudioRecorder from './AudioRecorder';
 import PrescriptionReview from './PrescriptionReview';
 import './DoctorPortal.css';
 
-export default function DoctorPortal({ onBack, onConfirmPrescription, pharmacyQueue, user, onLogout }) {
-  const [patients, setPatients] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pharmacy_ai_patients');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+export default function DoctorPortal({ onBack, onConfirmPrescription, user, onLogout }) {
+  const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescriptionData, setPrescriptionData] = useState(null);
   const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'waiting' | 'in-consultation' | 'approved'
@@ -25,9 +18,6 @@ export default function DoctorPortal({ onBack, onConfirmPrescription, pharmacyQu
       if (data.success && Array.isArray(data.data)) {
         const fetchedPatients = data.data;
         setPatients(fetchedPatients);
-        try {
-          localStorage.setItem('pharmacy_ai_patients', JSON.stringify(fetchedPatients));
-        } catch (e) {}
 
         // Keep selected patient reference updated, prioritizing 'In Consultation' patient
         setSelectedPatient(prev => {

@@ -2,24 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DispensePrescription from './DispensePrescription';
 import { API_BASE_URL } from './config';
 import './Pharmacy.css';
-export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
+export default function Pharmacy({ onBack, user, onLogout }) {
   const [activeTab, setActiveTab] = useState('pharmacy');
-  const [dbPrescriptions, setDbPrescriptions] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pharmacy_ai_prescriptions');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-  const [inventory, setInventory] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pharmacy_ai_inventory');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [dbPrescriptions, setDbPrescriptions] = useState([]);
+  const [inventory, setInventory] = useState([]);
   const [inventorySearch, setInventorySearch] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMedicine, setNewMedicine] = useState({ name: '', stock: '', expiry_date: '' });
@@ -35,9 +21,6 @@ export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setDbPrescriptions(data.data);
-        try {
-          localStorage.setItem('pharmacy_ai_prescriptions', JSON.stringify(data.data));
-        } catch (e) {}
       }
     } catch (e) {
       console.error("Failed to fetch prescriptions from backend:", e);
@@ -50,9 +33,6 @@ export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setInventory(data.data);
-        try {
-          localStorage.setItem('pharmacy_ai_inventory', JSON.stringify(data.data));
-        } catch (e) {}
       }
     } catch (e) {
       console.error("Failed to fetch inventory from backend:", e);
@@ -69,14 +49,7 @@ export default function Pharmacy({ onBack, queue = [], user, onLogout }) {
     return () => clearInterval(interval);
   }, [fetchDbPrescriptions, fetchInventory]);
 
-  // Combine live DB prescriptions with props queue
-  const combinedQueue = [...dbPrescriptions];
-  queue.forEach(qItem => {
-    const exists = combinedQueue.some(dbItem => (dbItem.rxNumber || dbItem.id) === (qItem.rxNumber || qItem.id));
-    if (!exists) {
-      combinedQueue.push(qItem);
-    }
-  });
+  const combinedQueue = dbPrescriptions;
 
   const newPrescriptionsQueue = combinedQueue.filter(rx => rx.status?.toLowerCase() === 'new');
   const pendingCount = newPrescriptionsQueue.length;

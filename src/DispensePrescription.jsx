@@ -139,6 +139,13 @@ export default function DispensePrescription({ prescription, onBack, onDispenseC
           body: JSON.stringify({ medicines: dispensedItemsToUpdate })
         });
       }
+      
+      // Update prescription status in DB
+      await fetch(`${API_BASE_URL}/api/prescriptions/${encodeURIComponent(targetRxKey)}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Dispensed' })
+      });
 
       // 4. Broadcast real-time update to all open portals
       if ('BroadcastChannel' in window) {
