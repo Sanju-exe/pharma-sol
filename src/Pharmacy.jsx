@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DispensePrescription from './DispensePrescription';
+import PharmacyAnalytics from './PharmacyAnalytics';
 import { API_BASE_URL } from './config';
 import './Pharmacy.css';
 export default function Pharmacy({ onBack, user, onLogout }) {
@@ -182,7 +183,7 @@ export default function Pharmacy({ onBack, user, onLogout }) {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M10.5 20.5 19 12a4.95 4.95 0 1 0-7-7L3.5 13.5a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
             Pharmacy
           </a>
-          <a href="#" className="nav-item">
+          <a href="#" className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('reports'); }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
             Reports
           </a>
@@ -472,6 +473,10 @@ export default function Pharmacy({ onBack, user, onLogout }) {
             </div>
           </div>
           </>
+          )}
+
+          {activeTab === 'reports' && (
+            <PharmacyAnalytics dbPrescriptions={dbPrescriptions} inventory={inventory} />
           )}
 
           {activeTab === 'inventory' && (
