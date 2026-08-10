@@ -8,7 +8,7 @@ export default function AudioRecorder({ activePatient, onSuccess }) {
 
   const WEBHOOK_URL =
     import.meta.env.VITE_VOICE_WEBHOOK_URL ||
-    "https://api.agents.snsihub.ai/webhook/aca7be79-e11d-4df6-9373-3e8cf3f2b9c3";
+    "https://api.agents.snsihub.ai/webhook-test/8a518174-c051-488d-8531-3f53a2412c9f";
 
   const TEST_WEBHOOK_URL = WEBHOOK_URL.replace('/webhook/', '/webhook-test/');
 
