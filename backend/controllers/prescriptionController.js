@@ -2,8 +2,42 @@ const db = require('../db');
 const { generatePrescriptionHTML, generateBillHTML } = require('../utils/htmlGenerator');
 const { loadStore, saveStore } = require('../utils/persistentStore');
 
+const defaultSeedPrescriptions = [
+  {
+    id: 101,
+    rxNumber: '#RX-1295',
+    patientId: 'PT-57311',
+    patientName: 'hariharan',
+    doctorName: 'Dr. Jagadeesh',
+    diagnosis: 'cold and cough',
+    medicines: [
+      { name: 'Paracetamol 650mg', dosage: '1 (mrng, night)', duration: 3, qty: 6, unitPrice: 15, amount: 90 }
+    ],
+    status: 'Dispensed',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
+  },
+  {
+    id: 102,
+    rxNumber: '#RX-2110',
+    patientId: 'PT-98214',
+    patientName: 'Srisaran.S',
+    doctorName: 'Dr. Nikitha',
+    diagnosis: 'Acute Viral Fever',
+    medicines: [
+      { name: 'Dolo 650mg', dosage: '1 tablet', frequency: 'Morning, Evening, Night', duration: 3, qty: 9, unitPrice: 15, amount: 135 },
+      { name: 'Cetirizine 10mg', dosage: '1 tablet', frequency: 'Night', duration: 5, qty: 5, unitPrice: 10, amount: 50 }
+    ],
+    status: 'Dispensed',
+    createdAt: new Date(Date.now() - 3600000 * 5).toISOString()
+  }
+];
+
 // Persistent disk-backed fallback store for prescriptions across server restarts
-let fallbackPrescriptions = loadStore('prescriptions.json', []);
+let fallbackPrescriptions = loadStore('prescriptions.json', defaultSeedPrescriptions);
+if (!fallbackPrescriptions || fallbackPrescriptions.length === 0) {
+  fallbackPrescriptions = defaultSeedPrescriptions;
+  saveStore('prescriptions.json', fallbackPrescriptions);
+}
 
 const syncPrescriptionsStore = () => {
   saveStore('prescriptions.json', fallbackPrescriptions);

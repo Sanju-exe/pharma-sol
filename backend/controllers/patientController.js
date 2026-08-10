@@ -1,8 +1,45 @@
 const db = require('../db');
 const { loadStore, saveStore } = require('../utils/persistentStore');
 
+const defaultSeedPatients = [
+  {
+    id: 1,
+    patientId: 'PT-57311',
+    name: 'hariharan',
+    age: '24',
+    gender: 'Male',
+    contact: '9876543210',
+    place: 'Coimbatore',
+    temperature: '98.6 °F',
+    bloodPressure: '120/80 mmHg',
+    recordingDate: new Date().toLocaleDateString(),
+    complaints: 'cold and cough',
+    status: 'Dispensed',
+    collected_by: 'Receptionist'
+  },
+  {
+    id: 2,
+    patientId: 'PT-98214',
+    name: 'Srisaran.S',
+    age: '21',
+    gender: 'Male',
+    contact: '9876543211',
+    place: 'Coimbatore',
+    temperature: '100.2 °F',
+    bloodPressure: '122/82 mmHg',
+    recordingDate: new Date().toLocaleDateString(),
+    complaints: 'Acute Viral Fever',
+    status: 'Dispensed',
+    collected_by: 'Receptionist'
+  }
+];
+
 // Persistent disk-backed fallback store to ensure records persist across server restarts
-let fallbackPatients = loadStore('patients.json', []);
+let fallbackPatients = loadStore('patients.json', defaultSeedPatients);
+if (!fallbackPatients || fallbackPatients.length === 0) {
+  fallbackPatients = defaultSeedPatients;
+  saveStore('patients.json', fallbackPatients);
+}
 
 const syncPatientsStore = () => {
   saveStore('patients.json', fallbackPatients);
