@@ -230,7 +230,6 @@ export default function Pharmacy({ onBack, user, onLogout }) {
         <header className="top-header">
           <div className="brand">SNS Hospital</div>
           <nav className="top-nav">
-            <a href="#" className="active" style={{ textTransform: 'capitalize' }}>{activeTab}</a>
           </nav>
           <div className="header-actions">
             {user ? (
