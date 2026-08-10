@@ -13,10 +13,21 @@ function App() {
   const [prescriptionData, setPrescriptionData] = useState(null);
   const [portal, setPortal] = useState(null); // null means Landing/PortalSelection
   const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'portals'
-  const [loggedInPortals, setLoggedInPortals] = useState({
-    reception: null,
-    doctor: null,
-    pharmacy: null
+  const [loggedInPortals, setLoggedInPortals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_ai_logged_in_portals');
+      return saved ? JSON.parse(saved) : {
+        reception: null,
+        doctor: null,
+        pharmacy: null
+      };
+    } catch (e) {
+      return {
+        reception: null,
+        doctor: null,
+        pharmacy: null
+      };
+    }
   });
 
   const lastPopStateTimeRef = useRef(0);
@@ -130,11 +141,23 @@ function App() {
   }, [portal, viewMode, goToPortals, goToLanding]);
 
   const handleLogin = (portalType, user) => {
-    setLoggedInPortals(prev => ({ ...prev, [portalType]: user }));
+    setLoggedInPortals(prev => {
+      const updated = { ...prev, [portalType]: user };
+      try {
+        localStorage.setItem('pharmacy_ai_logged_in_portals', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleLogout = (portalType) => {
-    setLoggedInPortals(prev => ({ ...prev, [portalType]: null }));
+    setLoggedInPortals(prev => {
+      const updated = { ...prev, [portalType]: null };
+      try {
+        localStorage.setItem('pharmacy_ai_logged_in_portals', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleConsultationSuccess = (data) => {
