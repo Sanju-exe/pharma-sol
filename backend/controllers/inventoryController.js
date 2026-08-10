@@ -18,16 +18,29 @@ const syncInventoryStore = () => {
 };
 
 const getInventory = (req, res) => {
+  const { search, q } = req.query;
+  const searchTerm = (search || q || '').trim();
+
   const query = 'SELECT * FROM inventory ORDER BY name ASC';
 
   db.query(query, (err, results) => {
-    if (err || !results) {
-      console.warn("MySQL fetch inventory failed, using persistent fallback:", err?.message);
-      return res.json({ success: true, data: fallbackInventory });
+    let inventoryData = results;
+    if (err || !results || results.length === 0) {
+      console.warn("MySQL fetch inventory failed or empty, using persistent fallback store:", err?.message);
+      inventoryData = fallbackInventory;
+    } else {
+      fallbackInventory = results;
+      syncInventoryStore();
     }
-    fallbackInventory = results;
-    syncInventoryStore();
-    res.json({ success: true, data: results });
+
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      inventoryData = inventoryData.filter(item => 
+        item.name && item.name.toLowerCase().includes(lower)
+      );
+    }
+
+    res.json({ success: true, data: inventoryData });
   });
 };
 

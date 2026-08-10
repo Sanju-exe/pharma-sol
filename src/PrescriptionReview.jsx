@@ -1,6 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { API_BASE_URL } from "./config";
 
 export default function PrescriptionReview({ data, onConfirm, onBack }) {
+  const [dbInventory, setDbInventory] = useState([]);
+  const [activeSearchIndex, setActiveSearchIndex] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/inventory`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setDbInventory(data.data);
+        }
+      })
+      .catch(err => console.warn("Failed to fetch inventory for autocomplete:", err));
+  }, []);
+
   const [prescription, setPrescription] = useState(() => {
     if (!data) {
       return { patientName: "", illness: "", approved: false, medicines: [] };
@@ -133,13 +148,48 @@ export default function PrescriptionReview({ data, onConfirm, onBack }) {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
                 </button>
                 <div className="med-row">
-                  <div className="input-wrap flex-2">
+                  <div className="input-wrap flex-2" style={{ position: 'relative' }}>
                     <label className="mini-label">Name</label>
                     <input 
                       className="input-field" 
                       value={med.name} 
-                      onChange={(e) => handleMedicineChange(idx, "name", e.target.value)}
+                      onFocus={() => setActiveSearchIndex(idx)}
+                      onChange={(e) => {
+                        handleMedicineChange(idx, "name", e.target.value);
+                        setActiveSearchIndex(idx);
+                      }}
+                      placeholder="Search DB inventory..."
                     />
+                    {activeSearchIndex === idx && med.name.trim().length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '180px', overflowY: 'auto', marginTop: '4px' }}>
+                        {(() => {
+                          const q = med.name.trim().toLowerCase();
+                          const matches = dbInventory.filter(item => item.name && item.name.toLowerCase().includes(q));
+                          if (matches.length === 0) {
+                            return (
+                              <div style={{ padding: '10px 12px', fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                                No products found in inventory.
+                              </div>
+                            );
+                          }
+                          return matches.map((item, mIdx) => (
+                            <div 
+                              key={mIdx} 
+                              onClick={() => {
+                                handleMedicineChange(idx, "name", item.name);
+                                setActiveSearchIndex(null);
+                              }}
+                              style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                              onMouseOut={(e) => e.currentTarget.style.background = '#ffffff'}
+                            >
+                              <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.name}</span>
+                              <span style={{ fontSize: '11px', color: '#059669', background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px' }}>Current Stock: {item.stock}</span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
                   </div>
                   <div className="input-wrap flex-1">
                     <label className="mini-label">Dosage</label>

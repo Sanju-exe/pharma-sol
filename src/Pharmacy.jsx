@@ -534,14 +534,17 @@ export default function Pharmacy({ onBack, user, onLogout }) {
                 <tbody>
                   {inventory.length === 0 ? (
                     <tr>
-                      <td colSpan="4" style={{textAlign: 'center', color: '#6b7280', padding: '32px'}}>Connecting to database / No inventory data...</td>
+                      <td colSpan="5" style={{textAlign: 'center', color: '#6b7280', padding: '32px'}}>No products found in inventory.</td>
                     </tr>
                   ) : (() => {
-                    const filteredInventory = inventory.filter(item => item.name.toLowerCase().includes(inventorySearch.toLowerCase()));
+                    const searchQ = inventorySearch.trim().toLowerCase();
+                    const filteredInventory = inventory.filter(item => 
+                      item.name && item.name.toLowerCase().includes(searchQ)
+                    );
                     if (filteredInventory.length === 0) {
                       return (
                         <tr>
-                          <td colSpan="5" style={{textAlign: 'center', color: '#6b7280', padding: '32px'}}>No inventory data matches your search.</td>
+                          <td colSpan="5" style={{textAlign: 'center', color: '#6b7280', padding: '32px'}}>No products found in inventory.</td>
                         </tr>
                       );
                     }
@@ -551,7 +554,7 @@ export default function Pharmacy({ onBack, user, onLogout }) {
                         <td className="p-patient-name">{item.name}</td>
                         <td>
                           <span className={`p-badge ${item.stock <= item.reorder_threshold ? (item.stock === 0 ? 'critical-badge' : 'warning-badge') : 'completed'}`}>
-                            {item.stock} Units
+                            Current Stock: {item.stock}
                           </span>
                         </td>
                         <td>{item.expiry_date || 'N/A'}</td>
